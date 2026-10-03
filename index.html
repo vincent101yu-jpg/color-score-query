@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COLOR成績查詢系統</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-color: #000000;
+            --border-color: #9ca3af;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* 專門用來控制背景圖縮放與透明度的設定 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('logo.jpg'); /* 如果是 png 檔請改為 logo.png */
+            background-size: 700px; /* 💡 圖片大小：數值越小圖片越小（例如改 250px） */
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.5; /* 💡 透明度：數值介於 0 到 1 之間，越小越淡（例如 0.1） */
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(6px);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.75rem;
+            margin-bottom: 28px;
+            color: #000000;
+            letter-spacing: 0.5px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, #2563eb, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #000000;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1rem;
+            color: #000000;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        select:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+            color: #6b7280;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 16px;
+            font-size: 0.95rem;
+            color: #000000;
+            font-weight: 500;
+        }
+
+        .result-section {
+            margin-top: 32px;
+        }
+
+        .result-section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+            color: #000000;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+            min-width: 400px;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        td {
+            color: #000000;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><span>COLOR</span> 成績查詢系統</h1>
+
+        <div class="form-group">
+            <label for="classSelect">班別</label>
+            <select id="classSelect" onchange="onClassChange()">
+                <option value="">請選擇班別 ▼</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="nameInput">姓名</label>
+            <input type="text" id="nameInput" placeholder="請輸入姓名（例如：王小明）" onblur="loadItems()">
+        </div>
+
+        <div class="form-group">
+            <label for="itemSelect">項目</label>
+            <select id="itemSelect" disabled>
+                <option value="">請先選擇班別與輸入姓名 ▼</option>
+            </select>
+        </div>
+
+        <button onclick="queryScores()">查詢成績</button>
+
+        <div id="statusArea"></div>
+
+        <div class="result-section" id="resultSection" style="display: none;">
+            <h2>查詢結果</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>測驗日期</th>
+                            <th>教練</th>
+                            <th>項目</th>
+                            <th>成績</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody">
+                        <!-- 動態插入查詢結果 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxH5g5d8vlbMjs6XxHK4JN634Kg7LuP7Bnmg-qjRnKKYVNNGDaz1s2a0gJE1RVY3uQ5/exec";
+
+        const classSelect = document.getElementById('classSelect');
+        const nameInput = document.getElementById('nameInput');
+        const itemSelect = document.getElementById('itemSelect');
+        const statusArea = document.getElementById('statusArea');
+        const resultSection = document.getElementById('resultSection');
+        const resultBody = document.getElementById('resultBody');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadClasses();
+        });
+
+        async function loadClasses() {
+            statusArea.innerHTML = '<div class="status-message">載入班別中...</div>';
+            try {
+                const response = await fetch(`${API_URL}?action=classes`);
+                const classes = await response.json();
+                
+                classSelect.innerHTML = '<option value="">請選擇班別 ▼</option>';
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls;
+                    option.textContent = cls;
+                    classSelect.appendChild(option);
+                });
+                statusArea.innerHTML = '';
+            } catch (error) {
+                console.error(error);
+                statusArea.innerHTML = '<div class="status-message" style="color: red;">班別載入失敗，請稍後再試</div>';
+            }
+        }
+
+        function onClassChange() {
+            loadItems();
+        }
+
+        async function loadItems() {
+            const className = classSelect.value;
+            const name = nameInput.value.trim();
+
+            if (!className || !name) {
+                itemSelect.innerHTML = '<option value="">請先選擇班別與輸入姓名 ▼</option>';
+                itemSelect.disabled = true;
+                return;
+            }
+
+            statusArea.innerHTML = '<div class="status-message">載入項目中...</div>';
+            try {
+                const response = await fetch(`${API_URL}?action=items&className=${encodeURIComponent(className)}&name=${encodeURIComponent(name)}`);
+                const items = await response.json();
+
+                itemSelect.innerHTML = '<option value="ALL">全部項目</option>';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    itemSelect.appendChild(option);
+                });
+
+.itemSelect.disabled = false;
+                statusArea.innerHTML = '';
+            } catch (error) {
+                console.error(error);
+                statusArea.innerHTML = '<div class="status-message" style="color: red;">項目載入失敗</div>';
+            }
+        }
+
+        async function queryScores() {
+            const className = classSelect.value;
+            const name = nameInput.value.trim();
+            const selectedItem = itemSelect.value;
+
+            if (!className || !name) {
+                alert("請先選擇班別與填寫姓名");
+                return;
+            }
+
+            statusArea.innerHTML = '<div class="status-message">查詢中...</div>';
+            resultSection.style.display = 'none';
+
+            try {
+                let url = `${API_URL}?name=${encodeURIComponent(name)}&className=${encodeURIComponent(className)}`;
+                if (selectedItem && selectedItem !== "ALL") {
+                    url += `&item=${encodeURIComponent(selectedItem)}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                statusArea.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    statusArea.innerHTML = '<div class="status-message">查無測驗成績</div>';
+                    return;
+                }
+
+                resultBody.innerHTML = '';
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.date}</td>
+                        <td>${row.coach}</td>
+                        <td>${row.item}</td>
+                        <td>${row.score}</td>
+                    `;
+                    resultBody.appendChild(tr);
+                });
+
+                resultSection.style.display = 'block';
+
+            } catch (error) {
+                console.error(error);
+                statusArea.innerHTML = '<div class="status-message" style="color: red;">資料載入失敗，請稍後再試</div>';
+            }
+        }
+    </script>
+</body>
+</html>
